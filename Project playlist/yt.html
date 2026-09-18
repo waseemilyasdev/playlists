@@ -1,0 +1,292 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="theme-color" content="#f4f1eb">
+    <title>Playlist Downloader</title>
+    <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Crect width='64' height='64' rx='16' fill='%2318211f'/%3E%3Cpath d='M32 13v25m0 0 11-11m-11 11L21 27M17 48h30' fill='none' stroke='%23b9e7ce' stroke-width='7' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E">
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=DM+Mono:wght@400;500&family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap');
+
+        :root {
+            --ink: #18211f;
+            --muted: #6d7773;
+            --paper: #f4f1eb;
+            --panel: #fffdfa;
+            --line: #ddd9d0;
+            --mint: #b9e7ce;
+            --mint-dark: #236044;
+            --coral: #ef806d;
+            --yellow: #f7db75;
+            --shadow: 0 18px 60px rgba(35, 53, 47, .08);
+        }
+
+        body.dark-theme {
+            --ink: #edf5ef;
+            --muted: #a7b8ae;
+            --paper: #101816;
+            --panel: #18241f;
+            --line: #34483e;
+            --mint: #9be0bd;
+            --mint-dark: #73c49a;
+            --shadow: 0 18px 60px rgba(0, 0, 0, .24);
+            background-image: radial-gradient(#2b3d35 1px, transparent 1px);
+        }
+
+        * { box-sizing: border-box; }
+        body {
+            margin: 0;
+            color: var(--ink);
+            background: var(--paper);
+            font-family: 'Plus Jakarta Sans', sans-serif;
+            background-image: radial-gradient(#d9d4ca 1px, transparent 1px);
+            background-size: 22px 22px;
+            animation: drift 18s linear infinite;
+        }
+        button, input, select { font: inherit; }
+        button { cursor: pointer; }
+        .shell { width: min(1160px, calc(100% - 40px)); margin: auto; padding: 32px 0 70px; }
+        header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 54px; animation: reveal .7s .05s both; }
+        .brand { display: flex; align-items: center; gap: 12px; font-weight: 800; letter-spacing: -.04em; font-size: 1.2rem; }
+        .brand-mark { width: 38px; height: 38px; display: grid; place-items: center; border-radius: 12px; background: var(--ink); color: var(--mint); font-size: 1.2rem; transform: rotate(-5deg); animation: bob 3.5s ease-in-out infinite; }
+        .header-actions { display: flex; align-items: center; gap: 9px; }
+        .help, .theme-toggle { border: 1px solid var(--line); color: var(--muted); border-radius: 99px; padding: 9px 15px; background: rgba(255,253,250,.7); font-size: .78rem; font-weight: 700; transition: transform .2s, color .2s, border-color .2s, background .2s; }
+        .theme-toggle { width: 38px; height: 38px; padding: 0; display: grid; place-items: center; font-size: 1rem; }
+        body.dark-theme .help, body.dark-theme .theme-toggle { background: rgba(24,36,31,.8); }
+        .help:hover, .theme-toggle:hover { transform: translateY(-3px); color: var(--ink); border-color: var(--ink); }
+        .hero { max-width: 730px; margin-bottom: 35px; animation: reveal .7s .18s both; }
+        .eyebrow { color: var(--mint-dark); font-family: 'DM Mono', monospace; text-transform: uppercase; font-size: .72rem; letter-spacing: .12em; margin-bottom: 16px; animation: slide-in .7s .3s both; }
+        h1 { font-size: clamp(2.4rem, 6vw, 5.2rem); line-height: .98; letter-spacing: -.075em; margin: 0 0 20px; max-width: 720px; }
+        h1 em { display: inline-block; font-style: normal; animation: sway 5s ease-in-out 1s infinite; transform-origin: left bottom; }
+        .hero p { color: var(--muted); max-width: 530px; line-height: 1.65; margin: 0; font-size: 1rem; }
+        .workspace { display: grid; grid-template-columns: minmax(0, 1.4fr) minmax(270px, .6fr); gap: 22px; align-items: start; }
+        .panel { background: var(--panel); color: var(--ink); border: 1px solid var(--line); box-shadow: var(--shadow); border-radius: 18px; transition: transform .3s ease, box-shadow .3s ease; }
+        .panel:hover { transform: translateY(-4px); box-shadow: 0 24px 65px rgba(35, 53, 47, .13); }
+        .download-panel { padding: clamp(22px, 4vw, 40px); }
+        .panel-heading { display: flex; justify-content: space-between; align-items: center; gap: 16px; margin-bottom: 25px; }
+        h2, h3 { letter-spacing: -.045em; margin: 0; }
+        h2 { font-size: 1.25rem; }
+        .step { color: var(--muted); font-family: 'DM Mono', monospace; font-size: .72rem; }
+        label { display: block; font-size: .76rem; font-weight: 800; margin-bottom: 9px; }
+        .url-row { display: flex; gap: 10px; }
+        input, select { width: 100%; border: 1px solid var(--line); border-radius: 10px; background: #fff; color: var(--ink); padding: 15px 16px; outline: none; transition: border .2s, box-shadow .2s, background .2s, color .2s; }
+        body.dark-theme input, body.dark-theme select { background: #101816; }
+        input:focus, select:focus { border-color: var(--mint-dark); box-shadow: 0 0 0 4px rgba(185,231,206,.5); }
+        .primary { border: 0; border-radius: 10px; background: var(--ink); color: #fff; font-weight: 800; padding: 0 20px; white-space: nowrap; transition: transform .2s, background .2s, color .2s; }
+        body.dark-theme .primary { background: var(--mint); color: #102018; }
+        .primary:hover { background: var(--mint-dark); transform: translateY(-2px); }
+        .primary span { display: inline-block; transition: transform .25s ease; }
+        .primary:hover span { transform: translateX(5px); }
+        .primary.loading span { animation: nudge .8s ease-in-out infinite alternate; }
+        .primary:disabled { opacity: .55; cursor: not-allowed; transform: none; }
+        .hint { min-height: 24px; color: var(--muted); font-size: .76rem; margin: 10px 0 23px; }
+        .hint.error { color: #b3463c; }
+        .options { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; border-top: 1px solid var(--line); padding-top: 22px; }
+        .option small { display: block; color: var(--muted); font-size: .7rem; margin-top: 7px; }
+        .queue { margin-top: 26px; display: none; border-top: 1px solid var(--line); padding-top: 23px; }
+        .queue.visible { display: block; animation: rise .35s ease both; }
+        .queue-top { display: flex; justify-content: space-between; align-items: center; margin-bottom: 14px; }
+        .status { color: var(--mint-dark); font-family: 'DM Mono', monospace; font-size: .7rem; }
+        .progress-track { background: #e8e4dc; height: 9px; border-radius: 99px; overflow: hidden; }
+        .progress-bar { position: relative; width: 0%; height: 100%; border-radius: inherit; background: var(--coral); transition: width .4s ease; overflow: hidden; }
+        .progress-bar::after { content: ''; position: absolute; inset: 0; background: linear-gradient(90deg, transparent, rgba(255,255,255,.5), transparent); transform: translateX(-100%); animation: sheen 1.5s linear infinite; }
+        .queue-meta { display: flex; justify-content: space-between; color: var(--muted); font-size: .72rem; margin-top: 9px; }
+        .side-panel { padding: 24px; }
+        .side-panel h3 { margin-bottom: 20px; font-size: 1rem; }
+        .feature { display: flex; gap: 13px; padding: 16px 0; border-top: 1px solid var(--line); transition: transform .25s ease; }
+        .feature:hover { transform: translateX(6px); }
+        .feature-icon { flex: 0 0 31px; height: 31px; display: grid; place-items: center; border-radius: 9px; background: var(--yellow); font-size: .88rem; transition: transform .25s ease; }
+        .feature:hover .feature-icon { transform: rotate(8deg) scale(1.1); }
+        .feature strong { display: block; font-size: .79rem; margin-bottom: 4px; }
+        .feature span { display: block; color: var(--muted); font-size: .72rem; line-height: 1.45; }
+        .notice { margin-top: 22px; padding: 14px; border-radius: 11px; background: #f9ebcf; color: #785d26; font-size: .7rem; line-height: 1.5; }
+        body.dark-theme .notice { background: #3a3322; color: #f1d995; }
+        footer { margin-top: 29px; color: var(--muted); font-size: .68rem; display: flex; justify-content: space-between; gap: 20px; }
+        footer { animation: reveal .7s .65s both; }
+        @keyframes reveal { from { opacity: 0; transform: translateY(16px); } to { opacity: 1; transform: translateY(0); } }
+        @keyframes slide-in { from { opacity: 0; transform: translateX(-12px); } to { opacity: 1; transform: translateX(0); } }
+        @keyframes drift { from { background-position: 0 0; } to { background-position: 44px 44px; } }
+        @keyframes bob { 0%, 100% { transform: rotate(-5deg) translateY(0); } 50% { transform: rotate(2deg) translateY(-4px); } }
+        @keyframes sway { 0%, 100% { transform: rotate(0); } 50% { transform: rotate(-1deg) translateY(-2px); } }
+        @keyframes nudge { from { transform: translateX(0); } to { transform: translateX(5px); } }
+        @keyframes sheen { to { transform: translateX(100%); } }
+        @keyframes rise { from { opacity: 0; transform: translateY(7px); } to { opacity: 1; transform: translateY(0); } }
+        @media (prefers-reduced-motion: reduce) {
+            *, *::before, *::after { animation-duration: .01ms !important; animation-iteration-count: 1 !important; scroll-behavior: auto !important; transition-duration: .01ms !important; }
+        }
+        @media (max-width: 740px) {
+            .shell { width: min(100% - 28px, 560px); padding-top: 22px; }
+            header { margin-bottom: 38px; }
+            .help { font-size: 0; width: 38px; height: 38px; padding: 0; display: grid; place-items: center; }
+            .help::after { content: '?'; font-size: .8rem; }
+            .workspace { grid-template-columns: 1fr; }
+            .url-row { flex-direction: column; }
+            .primary { padding: 15px; }
+            .options { grid-template-columns: 1fr; }
+            footer { flex-direction: column; }
+        }
+    </style>
+</head>
+<body>
+    <main class="shell">
+        <header>
+            <div class="brand"><span class="brand-mark">↓</span><span>clipper</span></div>
+            <div class="header-actions">
+                <button class="theme-toggle" id="theme-toggle" type="button" title="Switch to dark mode" aria-label="Switch to dark mode">☾</button>
+                <button class="help" type="button" title="Open help">Need help?</button>
+            </div>
+        </header>
+
+        <section class="hero">
+            <div class="eyebrow">Playlist utility / 01</div>
+            <h1>Your playlist.<br><em>One download.</em></h1>
+            <p>Paste a public YouTube playlist and save every video to your computer in the format you prefer.</p>
+        </section>
+
+        <div class="workspace">
+            <section class="panel download-panel" aria-labelledby="download-title">
+                <div class="panel-heading">
+                    <h2 id="download-title">Start a download</h2>
+                    <span class="step">STEP 01 / 01</span>
+                </div>
+                <form id="download-form">
+                    <label for="playlist-url">YouTube playlist URL</label>
+                    <div class="url-row">
+                        <input id="playlist-url" type="url" placeholder="https://youtube.com/playlist?list=..." autocomplete="url" required>
+                        <button class="primary" id="download-button" type="submit">Fetch playlist <span aria-hidden="true">→</span></button>
+                    </div>
+                    <p class="hint" id="url-hint">Only public playlists are supported.</p>
+                    <div class="options">
+                        <div class="option">
+                            <label for="format">Download as</label>
+                            <select id="format"><option value="mp4">Video · MP4</option><option value="mp3">Audio · MP3</option></select>
+                            <small>Best quality available</small>
+                        </div>
+                        <div class="option">
+                            <label for="quality">Quality</label>
+                            <select id="quality"><option>1080p</option><option>720p</option><option>480p</option><option>Audio only</option></select>
+                            <small>Higher quality means larger files</small>
+                        </div>
+                    </div>
+                </form>
+                <div class="queue" id="queue" aria-live="polite">
+                    <div class="queue-top"><strong id="queue-title">Preparing playlist...</strong><span class="status" id="queue-status">CONNECTING</span></div>
+                    <div class="progress-track"><div class="progress-bar" id="progress-bar"></div></div>
+                    <div class="queue-meta"><span id="queue-detail">Checking URL</span><span id="progress-value">0%</span></div>
+                </div>
+            </section>
+
+            <aside class="panel side-panel">
+                <h3>Made for a tidy downloads folder.</h3>
+                <div class="feature"><span class="feature-icon">↯</span><div><strong>One click, whole playlist</strong><span>Videos are numbered and grouped into one folder.</span></div></div>
+                <div class="feature"><span class="feature-icon">▣</span><div><strong>Keep the quality</strong><span>Choose video or audio and a quality that fits.</span></div></div>
+                <div class="feature"><span class="feature-icon">✓</span><div><strong>Quiet progress</strong><span>See what is downloading without losing your place.</span></div></div>
+                <div class="notice">Use this tool only for videos you have permission to download. Respect the creator's rights and YouTube's terms.</div>
+            </aside>
+        </div>
+        <footer><span>CLIPPER · LOCAL DOWNLOAD TOOL</span><span>Files are saved to your system Downloads folder</span></footer>
+    </main>
+    <script>
+        const form = document.querySelector('#download-form');
+        const urlInput = document.querySelector('#playlist-url');
+        const hint = document.querySelector('#url-hint');
+        const button = document.querySelector('#download-button');
+        const queue = document.querySelector('#queue');
+        const progressBar = document.querySelector('#progress-bar');
+        const progressValue = document.querySelector('#progress-value');
+        const queueStatus = document.querySelector('#queue-status');
+        const queueDetail = document.querySelector('#queue-detail');
+        const queueTitle = document.querySelector('#queue-title');
+
+        const formatInput = document.querySelector('#format');
+        const qualityInput = document.querySelector('#quality');
+        const themeToggle = document.querySelector('#theme-toggle');
+
+        function setTheme(isDark) {
+            document.body.classList.toggle('dark-theme', isDark);
+            themeToggle.textContent = isDark ? '☀' : '☾';
+            themeToggle.title = isDark ? 'Switch to light mode' : 'Switch to dark mode';
+            themeToggle.setAttribute('aria-label', themeToggle.title);
+            localStorage.setItem('clipper-theme', isDark ? 'dark' : 'light');
+        }
+
+        setTheme(localStorage.getItem('clipper-theme') === 'dark');
+        themeToggle.addEventListener('click', () => {
+            setTheme(!document.body.classList.contains('dark-theme'));
+        });
+
+        async function readJson(response) {
+            const contentType = response.headers.get('content-type') || '';
+            if (!contentType.includes('application/json')) {
+                throw new Error(`API returned ${response.status} instead of JSON. Open this page through the Flask server at http://127.0.0.1:5000.`);
+            }
+            const data = await response.json();
+            if (!response.ok) throw new Error(data.error || 'Something went wrong.');
+            return data;
+        }
+
+        async function watchJob(jobId) {
+            const response = await fetch(`/api/jobs/${jobId}`);
+            const job = await readJson(response);
+            progressBar.style.width = `${job.progress}%`;
+            progressValue.textContent = `${job.progress}%`;
+            queueStatus.textContent = job.status.toUpperCase();
+            queueDetail.textContent = job.detail;
+            if (job.status === 'complete') {
+                queueDetail.innerHTML = `<a id="download-link" href="${job.download_url}" download>Playlist folder is downloading to Downloads</a>`;
+                document.querySelector('#download-link').click();
+                button.disabled = false;
+                button.classList.remove('loading');
+                button.innerHTML = 'Ready <span aria-hidden="true">✓</span>';
+                return;
+            }
+            if (job.status === 'error') throw new Error(job.detail);
+            setTimeout(() => watchJob(jobId), 1000);
+        }
+
+        form.addEventListener('submit', async (event) => {
+            event.preventDefault();
+            const url = urlInput.value.trim();
+            const isPlaylist = /(?:youtube\.com|youtu\.be).*list=/.test(url);
+            if (!isPlaylist) {
+                hint.textContent = 'That does not look like a playlist URL. Check that it includes “list=” and try again.';
+                hint.classList.add('error');
+                urlInput.focus();
+                return;
+            }
+            button.disabled = true;
+            button.classList.add('loading');
+            button.innerHTML = 'Working <span aria-hidden="true">→</span>';
+            hint.classList.remove('error');
+            hint.textContent = 'Checking playlist...';
+            queue.classList.add('visible');
+            queueTitle.textContent = 'Preparing playlist';
+            queueStatus.textContent = 'CONNECTING';
+            queueDetail.textContent = 'Reading playlist details';
+            progressBar.style.width = '2%';
+            progressValue.textContent = '2%';
+            try {
+                const playlist = await readJson(await fetch('/api/playlist', {
+                    method: 'POST', headers: {'Content-Type': 'application/json'}, body: JSON.stringify({url})
+                }));
+                queueTitle.textContent = `${playlist.title} · ${playlist.count} video${playlist.count === 1 ? '' : 's'}`;
+                const job = await readJson(await fetch('/api/download', {
+                    method: 'POST', headers: {'Content-Type': 'application/json'},
+                    body: JSON.stringify({url, format: formatInput.value, quality: qualityInput.value})
+                }));
+                hint.textContent = 'Download started. Keep this tab open until it is ready.';
+                watchJob(job.job_id);
+            } catch (error) {
+                hint.textContent = error.message;
+                hint.classList.add('error');
+                queueStatus.textContent = 'ERROR';
+                queueDetail.textContent = 'No files were downloaded';
+                button.disabled = false;
+                button.classList.remove('loading');
+                button.innerHTML = 'Try again <span aria-hidden="true">↻</span>';
+            }
+        });
+    </script>
+</body>
+</html>
